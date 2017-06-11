@@ -1,0 +1,13 @@
+# SII-dei-Tizi
+out
+.idea
+.classpath
+.project
+.settings
+*.gz
+*.wat
+*.warc
+the-file-name.txt
+/bin/
+/target/
+lib
