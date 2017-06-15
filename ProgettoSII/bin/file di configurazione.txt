@@ -1,7 +1,7 @@
-folderwatpath=/home/nicholas/Documenti/CommonCrawl ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat.path/
-folderFileWarcPath=/home/nicholas/Documenti/CommonCrawl ProgettoSII-final-with-fileconf2/ProgettoSII/src/file warc.path/
-folderWat=/home/nicholas/Documenti/CommonCrawl ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat/
-folderCache=/home/nicholas/Documenti/CommonCrawl ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/
+folderwatpath=/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat.path/
+folderFileWarcPath=/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file warc.path/
+folderWat=/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat/
+folderCache=/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/
 maxNumberWARCinCache=5
 maxSizeCache=100000000
 user=postgres

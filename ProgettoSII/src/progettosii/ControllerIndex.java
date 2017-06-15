@@ -89,14 +89,14 @@ public class ControllerIndex {
 
 			BufferedInputStream inD = new BufferedInputStream(connection.getInputStream());
 			BufferedOutputStream outD = new BufferedOutputStream(new FileOutputStream(folderWat+f.getName()));
-			String INPUT_GZIP_FILE = folderWat+f.getName();
+			String INPUT_GZIP_FILE = folderWat + f.getName();
 			//System.out.println("inputzip:"+INPUT_GZIP_FILE);
 			String OUTPUT_FILE = INPUT_GZIP_FILE.split(".gz")[0];
 			//System.out.println("outputunzip:"+OUTPUT_FILE);
 			FileInputStream is = null;
 
 			int n;
-			System.out.println("sto scaricando: "+f.getName());
+			System.out.println("sto scaricando: " + f.getName());
 			int count=0;
 			int j=0;
 			GZIPInputStream gzis = null;

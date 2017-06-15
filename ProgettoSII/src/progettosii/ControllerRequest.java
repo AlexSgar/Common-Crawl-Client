@@ -20,14 +20,16 @@ public class ControllerRequest implements Request{
 	private ConnectorDB connector;
 	private ObjectURL objectURL;
 	private GenerateObjectURL generateObjectURL;
+	//private String folderCache="G:\\Università (Roma Tre)\\Sistemi Intelligenti per Internet\\Progetto Common Crawl\\cache\\";
 	private String folderCache;
+	//private int maxNumberWARCinCache=5;
 	private int maxNumberWARCinCache;
 	//private int maxSizeCache=100000000; //in byte
 	private int maxSizeCache;
 	private ObjectConf oc;
 
 	public ControllerRequest(ObjectConf oc){
-		this.oc = oc;
+		this.oc=oc;
 	}
 
 	public byte[] getRequest(String URL){
@@ -38,8 +40,8 @@ public class ControllerRequest implements Request{
 		objectURL = new ObjectURL();
 		generateObjectURL= new GenerateObjectURL();
 		connector= new ConnectorDB(oc);
-		Connection connectionDB = ConnectorDB.getConnection();
-		byte[] rawData = null;
+		Connection connectionDB = connector.getConnection();
+		byte[] rawData=null;
 		try {
 			objectURL = generateObjectURL.getObjectURL(URL,connectionDB);
 			Cache cache = new Cache(folderCache,oc);
@@ -66,10 +68,13 @@ public class ControllerRequest implements Request{
 			String segmentWarc=objectURL.getSegmentWARC().split(" ")[0];
 			rawData = warcReader.retriveContentURL(folderCache, segmentWarc,URL);
 
-		} catch (SQLException | IOException ex) {
+
+		} catch (SQLException ex) {
+			Logger.getLogger(ControllerRequest.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (IOException ex) {
 			Logger.getLogger(ControllerRequest.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		//definisco il folder della cache
+		//definisco il foldere della cache
 
 		return rawData;
 	}
