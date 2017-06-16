@@ -20,12 +20,9 @@ public class ControllerRequest implements Request{
 	private ConnectorDB connector;
 	private ObjectURL objectURL;
 	private GenerateObjectURL generateObjectURL;
-	//private String folderCache="G:\\Università (Roma Tre)\\Sistemi Intelligenti per Internet\\Progetto Common Crawl\\cache\\";
 	private String folderCache;
-	//private int maxNumberWARCinCache=5;
-	private int maxNumberWARCinCache;
-	//private int maxSizeCache=100000000; //in byte
-	private int maxSizeCache;
+//	private int maxNumberWARCinCache;
+//	private int maxSizeCache;
 	private ObjectConf oc;
 
 	public ControllerRequest(ObjectConf oc){
@@ -33,40 +30,59 @@ public class ControllerRequest implements Request{
 	}
 
 	public byte[] getRequest(String URL){
+		
 		folderCache = oc.getFolderCache();
-		maxNumberWARCinCache = oc.getMaxNumberWARCinCache();
-		maxSizeCache = oc.getMaxSizeCache();
+//		maxNumberWARCinCache = oc.getMaxNumberWARCinCache();
+//		maxSizeCache = oc.getMaxSizeCache();
 
 		objectURL = new ObjectURL();
 		generateObjectURL= new GenerateObjectURL();
 		connector= new ConnectorDB(oc);
 		Connection connectionDB = connector.getConnection();
-		byte[] rawData=null;
+		
+		byte[] rawData = null;
 		try {
 			objectURL = generateObjectURL.getObjectURL(URL,connectionDB);
-			Cache cache = new Cache(folderCache,oc);
-			//System.out.println(cache.getOldWARC(connectionDB));
-			//System.out.println("size cache: "+cache.getSizeCache(connectionDB));
-			if(!cache.isPresent(objectURL.getSegmentWARC(), connectionDB)){
-				if (cache.getNumberSegmentWarc(connectionDB)<=maxNumberWARCinCache){
-					//if (cache.getSizeCache(connectionDB)<=maxSizeCache){
-					System.out.println("Download segmento warc fino a Offset richiesto in corso");
-					cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-				}
-				else{
-					String OldWARC=cache.getOldWARC(connectionDB);
-					File file = new File(folderCache+OldWARC);
-					file.delete();
-					cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-				}
-			}
-			else{
-				System.out.println("Resume download segmento warc fino a Offset richiesto in corso");
-				cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-			}
+			Cache cache = new Cache(oc);
+			
+			//Disable cache logic,download every time the warc slice containing the url htmlcontent
+			
+//			if(!cache.isPresent(objectURL.getSegmentWARC(), connectionDB)){
+//				if (cache.getNumberSegmentWarc(connectionDB) <= maxNumberWARCinCache){
+//					//if (cache.getSizeCache(connectionDB)<=maxSizeCache){
+//					System.out.println("Download segmento warc fino a Offset richiesto in corso");
+//					cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+//				}
+//				else{
+//					String OldWARC=cache.getOldWARC(connectionDB);
+//					File file = new File(folderCache+OldWARC);
+//					file.delete();
+//					cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+//				}
+//			}
+//			else{
+//				System.out.println("Resume download segmento warc fino a Offset richiesto in corso");
+//				cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+//			}
+			System.out.println("Download segmento warc richiesto in corso: da offset a offset+1MB");
+			cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+
 			WarcReader warcReader = new WarcReader();
 			String segmentWarc=objectURL.getSegmentWARC().split(" ")[0];
 			rawData = warcReader.retriveContentURL(folderCache, segmentWarc,URL);
+			
+			//delete current warc slice due to cache disabled
+			File f = new File(this.folderCache + segmentWarc);
+			
+			if (f.exists()){
+				if(f.delete()){
+					System.out.println("Cancello segmento WARC processato "+f.getName());
+				}else{
+					System.out.println("Delete operation is failed.");
+				}
+			}
+			
+			connectionDB.close();
 
 
 		} catch (SQLException ex) {
@@ -75,6 +91,7 @@ public class ControllerRequest implements Request{
 			Logger.getLogger(ControllerRequest.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		//definisco il foldere della cache
+		
 
 		return rawData;
 	}

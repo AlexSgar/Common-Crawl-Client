@@ -28,7 +28,6 @@ import java.util.zip.GZIPInputStream;
 public class ControllerIndex {
 	private ConnectorDB connector;
 	private GenerateObjectURL generateObjectURL;
-	//private String folderWat="C:\\Users\\Rob\\Documents\\NetBeansProjects\\ProgettoSII\\src\\file wat\\";
 	private String folderWat;
 	private static ObjectConf oc;
 	
@@ -37,25 +36,24 @@ public class ControllerIndex {
 	}
 	
 	public void createIndex(String fileWatPath) throws FileNotFoundException, IOException, SQLException{
-		folderWat=oc.getFolderWat();
-		FileReader fr= new FileReader(fileWatPath+"wat.path");
+		
+		folderWat = oc.getFolderWat();
+		FileReader fr= new FileReader(fileWatPath + "wat.path");
 		BufferedReader in = new BufferedReader(fr);
-		String riga;
+		String line;
 		String urlWet=null;
 		String stm =null;
+		
+		connector= new ConnectorDB(oc);
+		Connection connectionDB = connector.getConnection();
 
-		//int i=0;at sun.reflect.NativeCon
-		while ((riga=in.readLine())!=null){
-			//while(i<=0){
-			//riga=in.readLine();
-//			String stringaurl = "https://aws-publicdatasets.s3.amazonaws.com/"+riga;
-			String stringaurl = "https://commoncrawl.s3.amazonaws.com/"+riga;
+		while ((line = in.readLine()) != null){
+			String stringaurl = "https://commoncrawl.s3.amazonaws.com/" + line;
 			URL url = new URL(stringaurl);
 			String fileName = url.getFile();
 
-
-			int downloaded=0;
-			int size=-1;
+			int downloaded = 0;
+			int size = -1;
 			// Open connection to URL.
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -66,39 +64,34 @@ public class ControllerIndex {
 			connection.connect();
 
 			// Make sure response code is in the 200 range.
-			if (connection.getResponseCode() / 100 != 2) {
+			if (connection.getResponseCode() / 100 != 2)
 				System.out.println("error");
-			}
 
 			// Check for valid content length.
 			int contentLength = connection.getContentLength();
-			if (contentLength < 1) {
+			if (contentLength < 1)
 				System.out.println("error");
-			}
 
 			/* Set the size for this download if it
             hasn't been already set. */
 			if (size == -1) {
 				size = contentLength;   
-				System.out.println("grandezza file: "+contentLength+" byte");
+				System.out.println("grandezza file: " + contentLength + " byte");
 			}
 			// Open file and seek to the end of it.
-
-			File f=new File(folderWat+fileName);
+			File file = new File(folderWat + fileName);
 			//System.out.println("path: "+folderWat+f.getName());
 
 			BufferedInputStream inD = new BufferedInputStream(connection.getInputStream());
-			BufferedOutputStream outD = new BufferedOutputStream(new FileOutputStream(folderWat+f.getName()));
-			String INPUT_GZIP_FILE = folderWat + f.getName();
-			//System.out.println("inputzip:"+INPUT_GZIP_FILE);
+			BufferedOutputStream outD = new BufferedOutputStream(new FileOutputStream(folderWat + file.getName()));
+			String INPUT_GZIP_FILE = folderWat + file.getName();
 			String OUTPUT_FILE = INPUT_GZIP_FILE.split(".gz")[0];
-			//System.out.println("outputunzip:"+OUTPUT_FILE);
 			FileInputStream is = null;
 
 			int n;
-			System.out.println("sto scaricando: " + f.getName());
-			int count=0;
-			int j=0;
+			System.out.println("sto scaricando: " + file.getName());
+			int count = 0;
+			int j = 0;
 			GZIPInputStream gzis = null;
 			FileOutputStream outzip =null;
 			DataInputStream inStream = null;
@@ -106,6 +99,7 @@ public class ControllerIndex {
 			byte[] buffer = new byte[4096];
 			String entry="false";
 			int len;
+			
 			while ((n = inD.read(buffer)) > 0) {
 				if (count>j*(contentLength/10)){
 					j++;
@@ -115,11 +109,11 @@ public class ControllerIndex {
 				outD.flush();
 				count+=4096; 
 				if (entry=="false"){
-					gzis= new GZIPInputStream(new FileInputStream(INPUT_GZIP_FILE));
-					outzip= new FileOutputStream(OUTPUT_FILE);
+					gzis = new GZIPInputStream(new FileInputStream(INPUT_GZIP_FILE));
+					outzip = new FileOutputStream(OUTPUT_FILE);
 					is = new FileInputStream(INPUT_GZIP_FILE);
-					inStream=new DataInputStream(gzis);
-					entry="true";
+					inStream = new DataInputStream(gzis);
+					entry = "true";
 				}
 				//len = gzis.read(bufferzip);
 				//outzip.write(bufferzip, 0, len);
@@ -140,25 +134,22 @@ public class ControllerIndex {
 			is.close();
 			inStream.close();
 			gzis.close();
-			System.out.println("COMPLETATA");
-			connector= new ConnectorDB(oc);
-			Connection connectionDB = connector.getConnection();
-			ParseWat parseWat =new ParseWat();
-			parseWat.ParsingWat(OUTPUT_FILE, connectionDB);
-
-			System.out.println("cancello file");
-			System.out.println(f.getAbsolutePath());
-			File fZip = new File(folderWat+f.getName());
-			System.out.println("unzip: "+folderWat+f.getName().split(".gz")[0]);
-			File fUnZip = new File(folderWat+f.getName().split(".gz")[0]);
+			System.out.println("Decompressione COMPLETATA");
+			
+			ParseWat parseWat = new ParseWat();
+			parseWat.parsingWat(OUTPUT_FILE, connectionDB);
+			
+			System.out.println("Cancello file WAT processato");
+			System.out.println(file.getAbsolutePath());
+			File fZip = new File(folderWat+file.getName());
+			System.out.println("unzip: "+folderWat+file.getName().split(".gz")[0]);
+			File fUnZip = new File(folderWat+file.getName().split(".gz")[0]);
 			if (fZip.exists()){
-				if(fZip.delete()){
+				if(fZip.delete())
 					System.out.println(fZip.getName() + " is deleted!");
-				}else{
+				else
 					System.out.println("Delete operation is failed.");
-				}
 				System.out.println("file esiste");
-
 			}
 
 			if (fUnZip.exists()){
@@ -168,11 +159,10 @@ public class ControllerIndex {
 					System.out.println("Delete operation is failed.");
 				}
 				System.out.println("file esiste");
-
 			}
-
-			//i++;
 		}
+		
+		connectionDB.close();
 	}
 }
 

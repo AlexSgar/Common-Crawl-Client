@@ -19,7 +19,7 @@ public DataSource(ObjectConf oc){
 }
 
 //static final String PASS = "admin";
-    public static Connection getConnection(String URL) {
+    public Connection getConnection(String URL) {
         Connection connection = null;
         Statement st = null;
         try {

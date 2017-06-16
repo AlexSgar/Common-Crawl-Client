@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.io.SequenceInputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -39,21 +40,20 @@ import java.util.zip.GZIPOutputStream;
  * @author Rob
  */
 public class Cache {
-	private String PathCacheFolder;
+	private String pathCacheFolder;
 	private int chunkSize=1000000;
 	private String folderCache;
-	private String folderFileWarcPath;
+	private String pathFileWarcFolder;
 	private ObjectConf oc;
 
-	public Cache(String folder,ObjectConf oc){
-		this.PathCacheFolder=folder;
-		this.oc=oc;
+	public Cache(ObjectConf oc){
+		this.pathCacheFolder = oc.getFolderCache();
+		this.pathFileWarcFolder = oc.getFolderFileWarcPath();
 	}
 
 	public boolean isPresent(String segmentwarc,Connection connection) throws SQLException{
-		PreparedStatement ps = null;
-		String stm = "SELECT segmentwarc,filesize FROM cache WHERE segmentwarc='"+segmentwarc+"'";
-		ps = connection.prepareStatement(stm);
+		String stm = "SELECT segmentwarc,currentoffset FROM cache WHERE segmentwarc='"+segmentwarc+"'";
+		PreparedStatement ps = connection.prepareStatement(stm);
 		ResultSet rs = ps.executeQuery();
 		if (!rs.next()){
 			return false;
@@ -64,9 +64,8 @@ public class Cache {
 	}
 
 	public int getNumberSegmentWarc(Connection connection) throws SQLException{
-		PreparedStatement ps = null;
 		String stm = "SELECT COUNT(*) FROM cache";
-		ps = connection.prepareStatement(stm);
+		PreparedStatement ps = connection.prepareStatement(stm);
 		ResultSet rs = ps.executeQuery();
 		if(!rs.next()){
 			return 0;
@@ -77,9 +76,8 @@ public class Cache {
 	}
 
 	public int getSizeCache(Connection connection) throws SQLException{
-		PreparedStatement ps = null;
-		String stm = "SELECT segmentwarc,filesize FROM cache";
-		ps = connection.prepareStatement(stm);
+		String stm = "SELECT segmentwarc,currentoffset FROM cache";
+		PreparedStatement ps = connection.prepareStatement(stm);
 		ResultSet rs = ps.executeQuery();
 		int sizeCache=0;
 		while (rs.next()) {
@@ -91,7 +89,7 @@ public class Cache {
 	public String getOldWARC(Connection connection) throws SQLException{
 		folderCache = oc.getFolderCache();
 		PreparedStatement ps = null;
-		String stm = "SELECT segmentwarc,filesize FROM cache";
+		String stm = "SELECT segmentwarc,currentoffset FROM cache";
 		ps = connection.prepareStatement(stm);
 		ResultSet rs = ps.executeQuery();
 		int i=0;
@@ -116,76 +114,59 @@ public class Cache {
 	}
 
 
-	public void download(String segmentwarc, int Offset, Connection connection) throws MalformedURLException, IOException, SQLException{
-		folderFileWarcPath = oc.getFolderFileWarcPath();
-		FileReader fr= new FileReader(folderFileWarcPath + "warc.path");
+	public void download(String segmentwarc, int offset, Connection connection) throws MalformedURLException, IOException, SQLException{
+
+		FileReader fr= new FileReader(this.pathFileWarcFolder + "warc.path");
 		BufferedReader in = new BufferedReader(fr);
 		String riga = in.readLine();
 		riga = riga.split("warc")[0].concat("warc/");
+		in.close();
 
-		//String stringaurl = "https://aws-publicdatasets.s3.amazonaws.com/" + riga + segmentwarc;
 		String stringaurl = "https://commoncrawl.s3.amazonaws.com/" + riga + segmentwarc;
 
 		URL url = new URL(stringaurl);
 		String fileName = url.getFile();
+		
 		HttpURLConnection connectionTest = (HttpURLConnection) url.openConnection();
 		int TotalLength=connectionTest.getContentLength();
-		int downloaded=0;
-		int size=-1;
+		int startRange = offset;
+		int size =-1;
 		// Open connection to URL.
 		HttpURLConnection connectionHTTP = (HttpURLConnection) url.openConnection();
 
 		// Specify what portion of file to download.
-		String endRange = new Integer(Offset+chunkSize-1).toString();
+		String endRange = new Integer(offset + chunkSize).toString();
 		connectionHTTP.setRequestProperty("Accept-Encoding", "gzip");//Here the change
 
 		System.out.println(TotalLength);
-		if (TotalLength > Offset + chunkSize - 1){
-			connectionHTTP.setRequestProperty("Range","bytes=" + downloaded + "-"+endRange);
-		}
-		else{
-			connectionHTTP.setRequestProperty("Range","bytes=" + downloaded + "-");
-		}
+		//		if (TotalLength > offset + chunkSize - 1)
+		//			connectionHTTP.setRequestProperty("Range","bytes=" + offset + "-"+endRange);
+		//		else
+		connectionHTTP.setRequestProperty("Range","bytes=" + startRange + "-" + endRange);
+
 		// Connect to server.
 		connectionHTTP.connect();
 
 		// Make sure response code is in the 200 range.
-		if (connectionHTTP.getResponseCode() / 100 != 2) {
+		if (connectionHTTP.getResponseCode() / 100 != 2)
 			System.out.println("error");
-		}
 
 		// Check for valid content length.
 		int contentLength = connectionHTTP.getContentLength();
-		if (contentLength < 1) {
+		if (contentLength < 1)
 			System.out.println("error");
-		}
 
 		/* Set the size for this download if it
             hasn't been already set. */
 		if (size == -1) {
 			size = contentLength;   
-			System.out.println("grandezza file: "+contentLength);
+			System.out.println("grandezza file: " + contentLength);
 		}
-		// Open file and seek to the end of it.
-
-		File f = new File(PathCacheFolder + fileName);
-
-		//		BufferedInputStream inD = new BufferedInputStream(connectionHTTP.getInputStream());
-		//		InputStream inD = connectionHTTP.getInputStream();
-
-		//		BufferedOutputStream outD = new BufferedOutputStream(new FileOutputStream(PathCacheFolder+f.getName()));
-		//		OutputStream bos = new FileOutputStream(PathCacheFolder+f.getName());
-
-
-		String INPUT_GZIP_FILE = PathCacheFolder+f.getName();
-		System.out.println("inputzip:"+INPUT_GZIP_FILE);
-		String OUTPUT_FILE = INPUT_GZIP_FILE.split(".gz")[0];
-		System.out.println("outputunzip:" + OUTPUT_FILE);
-		//FileInputStream is = null;
-		
+		// Open file
+		File f = new File(this.pathCacheFolder + fileName);		
 
 		try(BufferedInputStream inD = new BufferedInputStream(connectionHTTP.getInputStream());
-				FileOutputStream bos = new FileOutputStream(PathCacheFolder+f.getName())){
+				FileOutputStream bos = new FileOutputStream(this.pathCacheFolder + f.getName())){
 			byte[] buffer = new byte[8192];
 			int intsRead;
 			while ((intsRead = inD.read(buffer)) > 0) {
@@ -195,203 +176,129 @@ public class Cache {
 			bos.close();
 			inD.close();
 		}
+		
+		
+		//disable update cache table
 
-
-		//decompress .gz
-		//		try (GZIPInputStream gzipis = new GZIPInputStream(new FileInputStream(PathCacheFolder+f.getName()));
-		//				OutputStream os = new FileOutputStream(PathCacheFolder+f.getName().split(".gz")[0])) {
-		//			byte[] buffer = new byte[8192];
-		//			int intsRead;
-		//			while ((intsRead = gzipis.read(buffer)) > 0) {
-		//				os.write(buffer, 0, intsRead);
-		//			}
-		//			gzipis.close();
-		//			os.flush();
-		//			os.close();
-		//		} catch (EOFException e) { e.printStackTrace();	}
-
-
-
-		//compress .gz
-		//		byte[] buffer = new byte[1024];
-		//		try{
-		//			Files.delete(Paths.get(PathCacheFolder + f.getName()));
-		//
-		//			GZIPOutputStream gzos = new GZIPOutputStream(new FileOutputStream(PathCacheFolder + f.getName()));
-		//
-		//			FileInputStream ins = new FileInputStream(PathCacheFolder + f.getName().split(".gz")[0]);
-		//
-		//			int len;
-		//			while ((len = ins.read(buffer)) > 0) {
-		//				gzos.write(buffer, 0, len);
-		//			}
-		//
-		//			ins.close();
-		//
-		//			gzos.finish();
-		//			gzos.close();
-		//
-		//			System.out.println("Done");
-		//
-		//		}catch(IOException ex){
-		//			ex.printStackTrace();
-		//		}		
-
-		/*int n;
-		System.out.println("sto scaricando: "+f.getName());
-		int count=0;
-		int j=0;
-		byte[] buffer = new byte[4096];
-		String entry="false";
-		int len;
-		while ((n = inD.read(buffer)) > 0) {
-			if (count>j*(contentLength/10)){
-				j++;
-				System.out.print("=");
-			}
-			outD.write(buffer,0,n);
-			outD.flush();
-			count+=4096;      
-		}
-		outD.close();
-		inD.close();*/
-
-		String stm = "INSERT INTO cache(segmentwarc,filesize) VALUES(?,?)";
-		PreparedStatement ps = connection.prepareStatement(stm);
-		ps.setString(1,segmentwarc);
-		ps.setInt(2,Offset+chunkSize);
-		try{
-			ps.executeUpdate();
-		} catch (SQLException e) {
-			System.out.println("Connection Failed! Check output console");
-			e.printStackTrace();
-		}
+//		String stm = "INSERT INTO cache(segmentwarc,currentoffset) VALUES(?,?)";
+//		PreparedStatement ps = connection.prepareStatement(stm);
+//		ps.setString(1,segmentwarc);
+//		//		ps.setInt(2,offset + chunkSize);
+//		ps.setInt(2, offset);
+//		try{
+//			ps.executeUpdate();
+//		} catch (SQLException e) {
+//			System.out.println("Connection Failed! Check output console");
+//			e.printStackTrace();
+//		}
+		
 	}
-
-	public void resume(String segmentwarc, int Offset, Connection connectionDB) throws SQLException, IOException{
+	
+/*Method resume disabled because of problem with append the new warc slice to the previous:
+ * the new warc is readable from filesystem but WarcReader fails*/
+	
+	/*public void resume(String segmentwarc, int newOffset, Connection connectionDB) throws SQLException, IOException{
+		
+		
 		PreparedStatement ps = null;
-		String stm = "SELECT segmentwarc,filesize FROM cache WHERE segmentwarc='"+segmentwarc+"'";
+		String stm = "SELECT segmentwarc,currentoffset FROM cache WHERE segmentwarc='"+segmentwarc+"'";
 		ps = connectionDB.prepareStatement(stm);
 		ResultSet rs = ps.executeQuery();
 		rs.next();
-		int filesize=rs.getInt(2);
+		int currentOffset = rs.getInt(2);
 		String warc= rs.getString(1);
-		if ((filesize<Offset)||(filesize<Offset+500000)){
+		System.out.println(newOffset + " RESUME " + currentOffset);
+		
+		FileReader fr= new FileReader(this.pathFileWarcFolder + "warc.path");
+		BufferedReader in = new BufferedReader(fr);
+		String riga = in.readLine();
+		riga = riga.split("warc")[0].concat("warc/");
+		in.close();
 
-			InputStream stream = null;
-			// Apre il file e ne cerca la fine.
-			RandomAccessFile file = null;
-
-			//String stringaurl = "https://aws-publicdatasets.s3.amazonaws.com/common-crawl/crawl-data/CC-MAIN-2014-35/segments/1408500800168.29/warc/"+segmentwarc;
-			String stringaurl = "https://commoncrawl.s3.amazonaws.com/crawl-data/CC-MAIN-2017-04/segments/1484560279933.49/warc/"+segmentwarc;		
+		if (newOffset < currentOffset){
+			String stringaurl = "https://commoncrawl.s3.amazonaws.com/"+riga + segmentwarc;		
 			System.out.println(stringaurl);
 
 			URL url = new URL(stringaurl);
 			String fileName = url.getFile();
 			System.out.println(fileName);
 
-			File f=new File(PathCacheFolder+fileName);
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			String endfile = new Integer(filesize).toString();
-			String endfile2 = new Integer(Offset+chunkSize-1).toString();
 			HttpURLConnection connectionTest = (HttpURLConnection) url.openConnection();
-			int warcFileSize=connectionTest.getContentLength();
-			boolean finefile=false;
-
-			if (warcFileSize-Offset>chunkSize-1){
-				connection.setRequestProperty("Range","bytes="+endfile+"-"+endfile2);
-			}
-			else{
-				finefile=true;
-				connection.setRequestProperty("Range","bytes=" + endfile + "-");
-			}
+			int warcFileSize = connectionTest.getContentLength();
+			boolean finefile = false;
+			
+			connection.setRequestProperty("Accept-Encoding", "gzip");//Here the change
+			connection.setRequestProperty("Range","bytes=" + newOffset + "-" + currentOffset);
 			connection.connect();
 			// Make sure response code is in the 200 range.
-			if (connection.getResponseCode() / 100 != 2) {
+			if (connection.getResponseCode() / 100 != 2)
 				System.out.println("error");
-			}
 
 			// Check for valid content length.
 			int contentLength = connection.getContentLength();
-			if (contentLength < 1) {
+			if (contentLength < 1)
 				System.out.println("error");
+
+			 Apre il file e ne cerca la fine.
+						RandomAccessFile file = new RandomAccessFile(pathCacheFolder + warc, "rw");
+						file.seek(file.length());
+						System.out.println(file.getFilePointer());
+						stream = connection.getInputStream();
+						
+						byte buffer[];
+						buffer = new byte[4096];
+						int n;
+						while ((n = stream.read(buffer)) > 0) {
+							file.write(buffer, 0, n);
+						}
+						file.close();
+			
+			File f = new File(pathCacheFolder + fileName);		
+
+			GZIPInputStream input = new GZIPInputStream(new BufferedInputStream(connection.getInputStream()));
+			FileOutputStream zipFile = new FileOutputStream(this.pathCacheFolder + "newSlice.gz");
+			int len;
+			byte[] bufferzip = new byte[4096];
+
+			while ((len = input.read(bufferzip)) > 0) {
+				zipFile.write(bufferzip, 0, len);
 			}
+			zipFile.flush();
+			zipFile.close();
+			input.close();
+			
+			
+			
+//			File cachedWarc = new File(this.pathCacheFolder + warc);
+//			File tempCachedWarc = new File(this.pathCacheFolder + "temporaryCachedWarcSlice.gz");
+//			System.out.println(cachedWarc.renameTo(tempCachedWarc));
+			
 
-			InputStream bStreamm = new FileInputStream(PathCacheFolder + warc);
-
-			ByteArrayOutputStream bOutStreamm = new ByteArrayOutputStream();
-
-			try{
-				GZIPInputStream gis = new GZIPInputStream(bStreamm);
-				byte[] buf = new byte[4096];
-				int len;
-
-				while((len = gis.read(buf)) != -1){
-					bOutStreamm.write(buf, 0, len);
+			try (	InputStream newWarcSlice = new FileInputStream(this.pathCacheFolder + "newSlice.gz");
+					GZIPInputStream cachedWarcSlice = new GZIPInputStream(new FileInputStream(this.pathCacheFolder + warc));
+					SequenceInputStream sis =  new SequenceInputStream(newWarcSlice, cachedWarcSlice);
+					GZIPOutputStream newCachedWarcSlice = new GZIPOutputStream(new FileOutputStream(this.pathCacheFolder + "mario.gz"))) {
+				byte[] buffer = new byte[8192];
+				int intsRead;
+				while ((intsRead = sis.read(buffer)) != -1) {
+					newCachedWarcSlice.write(buffer, 0, intsRead);
 				}
-
-				bOutStreamm.close();
-				gis.close();
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				bOutStreamm.close();
-				PrintWriter writer = new PrintWriter("/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/prima", "UTF-8");
-				writer.println(new String(bOutStreamm.toByteArray()));
-				writer.close();
-				//print unarchieved bytes
-				//				System.out.println(new String(bOutStream.toByteArray()));
-			}
-
-			// Apre il file e ne cerca la fine.
-			file = new RandomAccessFile(PathCacheFolder+warc, "rw");
-			file.seek(file.length());
-			System.out.println(file.getFilePointer());
-			stream = connection.getInputStream();
-			/* Dimensiona il buffer secondo la quantità di
-			                file restata da scaricare. */
-			byte buffer[];
-			buffer = new byte[4096];
-			int n;
-			while ((n = stream.read(buffer)) > 0) {
-				file.write(buffer, 0, n);
-			}
-			file.close();
-
-			InputStream bStream = new FileInputStream(PathCacheFolder + warc);
-
-			ByteArrayOutputStream bOutStream = new ByteArrayOutputStream();
-
-			try{
-				GZIPInputStream gis = new GZIPInputStream(bStream);
-				byte[] buf = new byte[4096];
-				int len;
-
-				while((len = gis.read(buf)) != -1){
-					bOutStream.write(buf, 0, len);
-				}
-
-				bOutStream.close();
-				gis.close();
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				bOutStream.close();
-				PrintWriter writer = new PrintWriter("/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/dopo", "UTF-8");
-				writer.println(new String(bOutStream.toByteArray()));
-				writer.close();
-				//print unarchieved bytes
-				//				System.out.println(new String(bOutStream.toByteArray()));
+				newCachedWarcSlice.finish();
+				newCachedWarcSlice.close();
+				sis.close();
+				newWarcSlice.close();
+				cachedWarcSlice.close();
 			}
 
 			//aggiorno Database cache
 			int totalsize;
 			if (finefile==false)
-				totalsize=Offset+chunkSize;
+				totalsize = newOffset + chunkSize;
 			else 
-				totalsize=warcFileSize;
+				totalsize = warcFileSize;
 
-			stm = "UPDATE cache set filesize='"+totalsize+"' WHERE segmentwarc='"+warc+"'";
+			stm = "UPDATE cache set currentoffset='" + newOffset + "' WHERE segmentwarc='" + warc + "'";
 			ps = connectionDB.prepareStatement(stm);
 			try{
 				ps.executeUpdate();
@@ -400,29 +307,5 @@ public class Cache {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * delete lines from the file specified in filePath, 
-	 * since the last occurrence of stringFromWhereCut
-	 * @param stringFromWhereCut
-	 */
-	private void cutFile(String filePath, String stringFromWhereCut){
-		try {
-			RandomAccessFile raFile = new RandomAccessFile(new File(filePath), "rw");
-
-			String line = "";
-			long length = 0, lengthReg = 0;
-			while((line = raFile.readLine()) != null){
-				length += line.getBytes("ISO-8859-1").length + 1;
-				if(line.contains(stringFromWhereCut))
-					lengthReg = length;
-			}
-			raFile.setLength(lengthReg - 1);
-			System.out.println(raFile.readLine() + (lengthReg - 1));
-			raFile.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+	}*/
 }
