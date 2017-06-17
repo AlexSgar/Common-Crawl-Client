@@ -15,13 +15,16 @@ import java.sql.SQLException;
  * @author Rob
  */
 public class GenerateObjectURL {
-    public ObjectURL getObjectURL(String URL,Connection connection) throws SQLException{
-        PreparedStatement ps = null;
+    
+	public ObjectURL getObjectURL(String URL,Connection connection) throws SQLException{
+        
+		PreparedStatement ps = null;
         String stm = "SELECT index,url,segmentwarc,actualcontentlength,offsetwarc FROM indexurl WHERE url='"+URL+"'";
         ps = connection.prepareStatement(stm);
         ResultSet rs = ps.executeQuery();
+       
         if (!rs.next()){
-            System.out.println("URL not found");
+            System.out.println("URL non presente nel'indice WAT del database");
             return null;
         }
         else{

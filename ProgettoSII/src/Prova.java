@@ -6,8 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import progettosii.Configurations;
-import progettosii.ConnectorDB;
-import progettosii.DataSource;
+import progettosii.DBRepository;
 import progettosii.ObjectConf;
 import progettosii.ParseWat;
 
@@ -25,7 +24,7 @@ public class Prova {
 		
 		
 		
-		Connection connection = new DataSource(oc).getConnection("jdbc:postgresql://localhost:5432/");
+		Connection connection = new DBRepository(oc).getConnection("jdbc:postgresql://localhost:5432/");
 		String stm = "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('indexurl')";
 		PreparedStatement ps = connection.prepareStatement(stm);
 		ResultSet rs = ps.executeQuery();

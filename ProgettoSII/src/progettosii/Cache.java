@@ -6,39 +6,17 @@
 package progettosii;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.RandomAccessFile;
-import java.io.SequenceInputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
-
-/**
- *
- * @author Rob
- */
 public class Cache {
 	private String pathCacheFolder;
 	private int chunkSize=1000000;
@@ -114,21 +92,16 @@ public class Cache {
 	}
 
 
-	public void download(String segmentwarc, int offset, Connection connection) throws MalformedURLException, IOException, SQLException{
+	public void download(String fullWarcSegment, int offset, Connection connection) throws MalformedURLException, IOException, SQLException{
 
-		FileReader fr= new FileReader(this.pathFileWarcFolder + "warc.path");
-		BufferedReader in = new BufferedReader(fr);
-		String riga = in.readLine();
-		riga = riga.split("warc")[0].concat("warc/");
-		in.close();
+		String commonCrawlWarUrl = "https://commoncrawl.s3.amazonaws.com/" + fullWarcSegment;
 
-		String stringaurl = "https://commoncrawl.s3.amazonaws.com/" + riga + segmentwarc;
-
-		URL url = new URL(stringaurl);
-		String fileName = url.getFile();
+		URL url = new URL(commonCrawlWarUrl);
+//		String fileName = url.getFile();
 		
-		HttpURLConnection connectionTest = (HttpURLConnection) url.openConnection();
-		int TotalLength=connectionTest.getContentLength();
+//		HttpURLConnection connectionTest = (HttpURLConnection) url.openConnection();
+//		int TotalLength=connectionTest.getContentLength();
+		
 		int startRange = offset;
 		int size =-1;
 		// Open connection to URL.
@@ -137,8 +110,7 @@ public class Cache {
 		// Specify what portion of file to download.
 		String endRange = new Integer(offset + chunkSize).toString();
 		connectionHTTP.setRequestProperty("Accept-Encoding", "gzip");//Here the change
-
-		System.out.println(TotalLength);
+		
 		//		if (TotalLength > offset + chunkSize - 1)
 		//			connectionHTTP.setRequestProperty("Range","bytes=" + offset + "-"+endRange);
 		//		else
@@ -149,24 +121,25 @@ public class Cache {
 
 		// Make sure response code is in the 200 range.
 		if (connectionHTTP.getResponseCode() / 100 != 2)
-			System.out.println("error");
+			System.out.println("Error: repsonse code !=200");
 
 		// Check for valid content length.
 		int contentLength = connectionHTTP.getContentLength();
 		if (contentLength < 1)
-			System.out.println("error");
+			System.out.println("Error: contentLength < 1");
 
 		/* Set the size for this download if it
             hasn't been already set. */
 		if (size == -1) {
 			size = contentLength;   
-			System.out.println("grandezza file: " + contentLength);
+			System.out.println("Grandezza file: " + contentLength +" byte");
 		}
 		// Open file
-		File f = new File(this.pathCacheFolder + fileName);		
+		String warcSegmentName = fullWarcSegment.split("/warc/")[1];
+		File warcSliceFile = new File(this.pathCacheFolder + warcSegmentName);		
 
 		try(BufferedInputStream inD = new BufferedInputStream(connectionHTTP.getInputStream());
-				FileOutputStream bos = new FileOutputStream(this.pathCacheFolder + f.getName())){
+				FileOutputStream bos = new FileOutputStream(warcSliceFile)){
 			byte[] buffer = new byte[8192];
 			int intsRead;
 			while ((intsRead = inD.read(buffer)) > 0) {
@@ -176,7 +149,6 @@ public class Cache {
 			bos.close();
 			inD.close();
 		}
-		
 		
 		//disable update cache table
 

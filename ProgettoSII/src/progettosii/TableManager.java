@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package progettosii;
 
 import java.sql.Connection;
@@ -13,38 +9,37 @@ import java.sql.Statement;
 
 
 public class TableManager {
-	private ObjectConf oc;
-	private DataSource dataSource;
+	private DBRepository dbRepository;
 
 	public TableManager(ObjectConf oc){
-		this.oc=oc;
-		this.dataSource = new DataSource(oc);
+		this.dbRepository = new DBRepository(oc);
 	}
 
-	public void createTable() throws ClassNotFoundException, SQLException{
-		Connection connection = this.dataSource.getConnection("jdbc:postgresql://localhost:5432/");
+	public void createDatabase() throws SQLException{
+		Connection connection = this.dbRepository.getConnection("jdbc:postgresql://localhost:5432/");
 
 		try {
-			String stm = "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('indexurl')";
-			PreparedStatement ps = connection.prepareStatement(stm);
-			ResultSet rs = ps.executeQuery();
-			if(rs.next() && rs.getString(1).equals("indexurl"))
-				System.out.println("Already Existing DataBase");
-			else {
+			if(!existsDatabase()){
+				
 				Statement statementDB = connection.createStatement();
 				System.out.println("Creazione Database e tabelle in corso...");
 				String query = "create database \"indexurl\"";
 				statementDB.executeUpdate(query);
-				connection =  this.dataSource.getConnection("jdbc:postgresql://localhost:5432/indexurl");
+				connection =  this.dbRepository.getConnection("jdbc:postgresql://localhost:5432/indexurl");
 
 				Statement statementTB = connection.createStatement();
 				query = "create table indexurl (index BIGSERIAL,url TEXT,segmentwarc TEXT,actualcontentlength integer,offsetwarc integer,CONSTRAINT indexurl_pkey PRIMARY KEY (index))"; 
 				statementTB.executeUpdate(query);
 				query = "create table cache (segmentwarc TEXT NOT NULL,currentoffset integer,CONSTRAINT cache_pkey PRIMARY KEY (segmentwarc))"; 
 				statementTB.executeUpdate(query);  
+
+				System.out.println("Database creato correttamente!");
+			}
+			else{
+				System.out.println("Database esistente,database non creato!");
 			}
 		} catch (SQLException e) {
-			System.out.println("Creazione tabella indexurl fallita");
+			System.out.println("Creazione Database indexurl fallito!");
 			e.printStackTrace();
 		}
 		finally{
@@ -52,26 +47,46 @@ public class TableManager {
 		}
 	}
 
-	public void dropTable() throws ClassNotFoundException, SQLException{
-		Connection connection =  this.dataSource.getConnection("jdbc:postgresql://localhost:5432/");
+	public void dropDatabase() throws SQLException{
+		Connection connection =  this.dbRepository.getConnection("jdbc:postgresql://localhost:5432/");
 
 		try {
-			String stm = "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('indexurl')";
-			PreparedStatement ps = connection.prepareStatement(stm);
-			ResultSet rs = ps.executeQuery();
-			if(rs.next() && rs.getString(1).equals("indexurl")){
+			if(existsDatabase()){
+			
 				Statement statementDB = connection.createStatement();
 				String query = "drop database indexurl";
 				statementDB.executeUpdate(query);
+				System.out.println("Database cancellato correttamente!");
 			}
 			else
-				System.out.println("Not Existing Database");
-			} catch (SQLException e1) {
-				System.out.println("Cancellazione Database fallita");
-			}
-			finally {
-				connection.close();
-			}
+				System.out.println("Database non esistente,database non cancellato!");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+			System.out.println("Cancellazione Database fallita!");
+		}
+		finally {
+			connection.close();
 		}
 	}
+
+	public boolean existsDatabase() throws SQLException{
+		
+		boolean exists = false;
+		Connection connection =  this.dbRepository.getConnection("jdbc:postgresql://localhost:5432/");
+
+		String stm = "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('indexurl')";
+		PreparedStatement ps = connection.prepareStatement(stm);
+		ResultSet rs = ps.executeQuery();
+
+		if(rs.next() && rs.getString(1).equals("indexurl")){
+			exists = true;
+		}
+		
+		connection.close();
+
+		return exists;
+	}
+}
+
+
 

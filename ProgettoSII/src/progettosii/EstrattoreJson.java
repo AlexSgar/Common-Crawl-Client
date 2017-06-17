@@ -9,10 +9,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-/**
- *
- * @author Rob
- */
 public class EstrattoreJson {
 	
 	private ObjectURL objectURL;

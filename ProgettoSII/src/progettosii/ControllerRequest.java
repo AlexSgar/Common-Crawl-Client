@@ -12,12 +12,10 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Rob
- */
-public class ControllerRequest implements Request{
-	private ConnectorDB connector;
+
+public class ControllerRequest{
+	
+	private DBRepository dbRepository;
 	private ObjectURL objectURL;
 	private GenerateObjectURL generateObjectURL;
 	private String folderCache;
@@ -29,7 +27,14 @@ public class ControllerRequest implements Request{
 		this.oc=oc;
 	}
 
-	public byte[] getRequest(String URL){
+	/**
+	 * Method that take a page URL,make an HTTP request to download correlated WARC slice and return the page content
+	 * If the request fails or correlated WARC doesn't exist in database index,the method return ""
+	 * @param pageURL
+	 * @return page content from URL
+	 * @throws SQLException
+	 */
+	public byte[] getRequest(String pageURL) throws SQLException{
 		
 		folderCache = oc.getFolderCache();
 //		maxNumberWARCinCache = oc.getMaxNumberWARCinCache();
@@ -37,62 +42,84 @@ public class ControllerRequest implements Request{
 
 		objectURL = new ObjectURL();
 		generateObjectURL= new GenerateObjectURL();
-		connector= new ConnectorDB(oc);
-		Connection connectionDB = connector.getConnection();
+		dbRepository= new DBRepository(oc);
+		Connection connectionDB = dbRepository.getConnection();
 		
-		byte[] rawData = null;
+		byte[] rawData = new String("").getBytes();
+		
 		try {
-			objectURL = generateObjectURL.getObjectURL(URL,connectionDB);
-			Cache cache = new Cache(oc);
+			objectURL = generateObjectURL.getObjectURL(pageURL,connectionDB);
+			String searchedUrl = pageURL;
 			
-			//Disable cache logic,download every time the warc slice containing the url htmlcontent
-			
-//			if(!cache.isPresent(objectURL.getSegmentWARC(), connectionDB)){
-//				if (cache.getNumberSegmentWarc(connectionDB) <= maxNumberWARCinCache){
-//					//if (cache.getSizeCache(connectionDB)<=maxSizeCache){
-//					System.out.println("Download segmento warc fino a Offset richiesto in corso");
-//					cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+			//check if pageURL is present in the WAT index of the database
+			if(objectURL != null){
+				
+				Cache cache = new Cache(oc);
+				String warcSegmentName = objectURL.getSegmentWARC();
+				
+				//Disable cache logic,download every time the warc slice containing the url htmlcontent
+				
+//				if(!cache.isPresent(objectURL.getSegmentWARC(), connectionDB)){
+//					if (cache.getNumberSegmentWarc(connectionDB) <= maxNumberWARCinCache){
+//						//if (cache.getSizeCache(connectionDB)<=maxSizeCache){
+//						System.out.println("Download segmento warc fino a Offset richiesto in corso");
+//						cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+//					}
+//					else{
+//						String OldWARC=cache.getOldWARC(connectionDB);
+//						File file = new File(folderCache+OldWARC);
+//						file.delete();
+//						cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+//					}
 //				}
 //				else{
-//					String OldWARC=cache.getOldWARC(connectionDB);
-//					File file = new File(folderCache+OldWARC);
-//					file.delete();
-//					cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+//					System.out.println("Resume download segmento warc fino a Offset richiesto in corso");
+//					cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
 //				}
-//			}
-//			else{
-//				System.out.println("Resume download segmento warc fino a Offset richiesto in corso");
-//				cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-//			}
-			System.out.println("Download segmento warc richiesto in corso: da offset a offset+1MB");
-			cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-
-			WarcReader warcReader = new WarcReader();
-			String segmentWarc=objectURL.getSegmentWARC().split(" ")[0];
-			rawData = warcReader.retriveContentURL(folderCache, segmentWarc,URL);
-			
-			//delete current warc slice due to cache disabled
-			File f = new File(this.folderCache + segmentWarc);
-			
-			if (f.exists()){
-				if(f.delete()){
-					System.out.println("Cancello segmento WARC processato "+f.getName());
-				}else{
-					System.out.println("Delete operation is failed.");
+				
+				System.out.println("Download segmento WARC richiesto in corso: da offset a offset+1MB");
+				
+				try{
+					cache.download(warcSegmentName, objectURL.getOffset(), connectionDB);
+					
+					WarcReader warcReader = new WarcReader();
+					rawData = warcReader.retriveContentURL(this.folderCache, warcSegmentName,pageURL);
+					
+					//delete current warc slice due to cache disabled
+					File warcSliceFile = new File(this.folderCache + warcSegmentName);
+					
+					if (warcSliceFile.exists()){
+						if(warcSliceFile.delete())
+							System.out.println("Warc "+warcSegmentName + "scaricato cancellato!");
+						else
+							System.out.println("Operazione di delete file "+warcSegmentName +" fallita!");
+					}
+					
+				}
+				catch(IOException e ){
+					//if an error occur with file downloaded or connection
+					
+					System.out.println("Error: warc associato all'url non trovato!");
+					System.out.println("Searched url: " +searchedUrl + " Searched Warc: " + warcSegmentName);
+					
+					e.printStackTrace();
+					
 				}
 			}
+			else{
+				System.out.println("Error: URL cercato non presente nell'indice WAT del database!");
+				System.out.println("Searched URL: " +searchedUrl);
+			}
 			
-			connectionDB.close();
-
 
 		} catch (SQLException ex) {
 			Logger.getLogger(ControllerRequest.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (IOException ex) {
-			Logger.getLogger(ControllerRequest.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		//definisco il foldere della cache
+		finally{
+			connectionDB.close();
+			
+		}
 		
-
 		return rawData;
 	}
 }

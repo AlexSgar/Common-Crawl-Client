@@ -10,6 +10,7 @@ package progettosii;
  * @author Rob
  */
 public class ObjectConf {
+	
     private String folderWat;
     private String folderwatpath;
     private String folderCache;

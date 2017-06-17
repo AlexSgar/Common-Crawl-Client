@@ -12,22 +12,18 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-/**
- *
- * @author Rob
- */
 public class Configurations {
     
-    //private String pathFileConfiguarations="C:\\Users\\Rob\\Documents\\NetBeansProjects\\ProgettoSII\\src\\file di configurazione.txt";
     
-    
-    public ObjectConf getConf(String pathFileConfiguarations){
-        ObjectConf oc = new ObjectConf();
-        FileReader fr;
+    public ObjectConf getConf(String pathFileConfiguarations) throws IOException{
+        
+    	ObjectConf oc = new ObjectConf();
+        FileReader fr = null;
+        BufferedReader in = null;
+       
         try {
-            fr = new FileReader(pathFileConfiguarations);
-            BufferedReader in = new BufferedReader(fr);
+        	fr = new FileReader(pathFileConfiguarations);
+            in = new BufferedReader(fr);
             String riga;
             String campo;
             int i;
@@ -66,6 +62,10 @@ public class Configurations {
             Logger.getLogger(Configurations.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
             Logger.getLogger(Configurations.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally{
+        	in.close();
+        	fr.close();
         }
         return oc;
     }

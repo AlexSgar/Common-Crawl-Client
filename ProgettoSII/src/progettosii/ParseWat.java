@@ -17,15 +17,18 @@ import java.util.List;
 
 public class ParseWat {
 
-	public void parsingWat(String filePath, String lineWarc, Connection connectionDB) throws FileNotFoundException, IOException, SQLException{
+	public void parsingWat(String watFilePath, String fullWarcSegmentName, Connection connectionDB) throws FileNotFoundException, IOException, SQLException{
+		
 		ObjectURL ou = new ObjectURL();
 		EstrattoreJson estrattoreJson=new EstrattoreJson();
-		BufferedReader in = new BufferedReader(new FileReader(filePath));
+		BufferedReader in = new BufferedReader(new FileReader(watFilePath));
 		String line;
 		System.out.println("Creazione dell'indice in corso...");
+		
 		for (int i = 0; i < 24; i++)
 			line = in.readLine();
 		int k=0;
+		
 		String JsonUrl = null;
 		List<ObjectURL> objectUrls = new LinkedList<>();
 
@@ -36,7 +39,7 @@ public class ParseWat {
 				if ((line = in.readLine()) != null){
 					ou = estrattoreJson.CreaObjectURL(JsonUrl);
 					if(ou != null){
-						ou.setSegmentWARC(lineWarc);		//it makes unuseful EstrattoreJson -> get("Filename"), because in this way we obtain the entire warc path
+						ou.setSegmentWARC(fullWarcSegmentName);		//it makes unuseful EstrattoreJson -> get("Filename"), because in this way we obtain the entire warc path
 						objectUrls.add(ou);
 					}
 				}
@@ -52,11 +55,12 @@ public class ParseWat {
 
 		in.close();
 
-		System.out.println("Creazione dell'indice COMPLETATA");
+		System.out.println("Creazione dell'indice per il WAT processato completata!");
 	}
 
 
 	private void batchInsertRecordsIntoTable(Connection dbConnection, List<ObjectURL> objectUrls) throws SQLException {
+		
 		String stm = "INSERT INTO indexurl(url,segmentwarc,actualcontentlength,offsetwarc) VALUES(?,?,?,?)";
 		PreparedStatement ps = dbConnection.prepareStatement(stm);
 		dbConnection.setAutoCommit(false);
