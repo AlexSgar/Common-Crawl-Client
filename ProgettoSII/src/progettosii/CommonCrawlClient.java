@@ -47,9 +47,7 @@ public class CommonCrawlClient {
 
 	public void deleteWatIndex() throws ClassNotFoundException, SQLException{
 		TableManager tm = new TableManager(this.oc);
-		if(tm.existsIndexTable())
-			tm.dropTable();
-
+		tm.dropTable();
 	}
 
 	public String getContentUrl(String urlRequest){
