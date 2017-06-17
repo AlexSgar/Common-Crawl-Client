@@ -17,7 +17,7 @@ import java.util.List;
 
 public class ParseWat {
 
-	public void parsingWat(String filePath, String lineWat, Connection connectionDB) throws FileNotFoundException, IOException, SQLException{
+	public void parsingWat(String filePath, String lineWarc, Connection connectionDB) throws FileNotFoundException, IOException, SQLException{
 		ObjectURL ou = new ObjectURL();
 		EstrattoreJson estrattoreJson=new EstrattoreJson();
 		BufferedReader in = new BufferedReader(new FileReader(filePath));
@@ -35,8 +35,10 @@ public class ParseWat {
 				JsonUrl = line;
 				if ((line = in.readLine()) != null){
 					ou = estrattoreJson.CreaObjectURL(JsonUrl);
-					ou.setSegmentWARC(lineWat);		//it makes unuseful EstrattoreJson -> get("Filename"), because in this way we obtain the entire warc path
-					objectUrls.add(ou);
+					if(ou != null){
+						ou.setSegmentWARC(lineWarc);		//it makes unuseful EstrattoreJson -> get("Filename"), because in this way we obtain the entire warc path
+						objectUrls.add(ou);
+					}
 				}
 				k = 0;
 				if(objectUrls.size() == 2000){
@@ -49,7 +51,7 @@ public class ParseWat {
 			batchInsertRecordsIntoTable(connectionDB, objectUrls);
 
 		in.close();
-		
+
 		System.out.println("Creazione dell'indice COMPLETATA");
 	}
 

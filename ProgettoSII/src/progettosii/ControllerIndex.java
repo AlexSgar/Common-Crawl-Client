@@ -135,7 +135,7 @@ public class ControllerIndex {
 			System.out.println("Decompressione COMPLETATA");
 			
 			ParseWat parseWat = new ParseWat();
-			parseWat.parsingWat(OUTPUT_FILE, lineWat, connectionDB);
+			parseWat.parsingWat(OUTPUT_FILE, lineWat.replaceAll("/wat/", "/warc/").replaceAll("wat.", ""), connectionDB);
 			
 			System.out.println("Cancello file WAT processato");
 			System.out.println(file.getAbsolutePath());
