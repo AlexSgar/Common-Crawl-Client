@@ -31,7 +31,7 @@ public class CommonCrawlClient {
 
 	public void createWatIndex() throws ClassNotFoundException, SQLException, FileNotFoundException, IOException{
 		TableManager tm = new TableManager(this.oc);
-		
+
 		tm.createTable();
 		System.out.println("Database creato correttamente");
 
@@ -64,29 +64,31 @@ public class CommonCrawlClient {
 		String configurationPath = "/home/nicholas/Documenti/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file di configurazione.txt";
 		CommonCrawlClient ccc = new CommonCrawlClient(configurationPath);
 
-//		ccc.deleteWatIndex();
-//		ccc.createWatIndex();
+		//		ccc.deleteWatIndex();
+		ccc.createWatIndex();
 
-		
-				String[] url = new String[] {"http://03online.com/news/3383", 
-						"http://05sese.com/news/class/160566.html", "http://0lik.ru/templates/fotomontag/115531-free-arthur-radley-website-template.html",
-						"http://1.163.com/detail/2924-401120986.html", "http://1portable.ru/index.php?newsid=7879", "https://www.pokemon-france.com/tag/event/", 
-						"https://www.pokerstarter.online/blogs/DanPoker77/Chast-shestaya", "https://www.promodeclic.fr/chalonnes-sous-le-lude", 
-						"https://www.promodescuentos.com/discusiones/memoria-ram-en-amazon-32555", "https://znanija.com/task/5725347"};
-		
-				List<String> results = new LinkedList<>();
-		
-				for(int i = 0; i < url.length; i++){
-					results.add(ccc.getContentUrl(url[i]));
-				}
-		
-				System.out.println(url.length == results.size());
-		
-				PrintWriter writer = new PrintWriter("results.txt", "UTF-8");
-				for (String string : results) {
-					writer.println(string + "\n\n===========================================\n\n");
-				}
-				writer.close();
+
+		String[] url = new String[] {"http://03online.com/news/3383", 
+				"http://05sese.com/news/class/160566.html", "http://0lik.ru/templates/fotomontag/115531-free-arthur-radley-website-template.html",
+				"http://1.163.com/detail/2924-401120986.html", "http://1portable.ru/index.php?newsid=7879", "https://www.pokemon-france.com/tag/event/", 
+				"https://www.pokerstarter.online/blogs/DanPoker77/Chast-shestaya", "https://www.promodeclic.fr/chalonnes-sous-le-lude", 
+				"https://www.promodescuentos.com/discusiones/memoria-ram-en-amazon-32555", "https://znanija.com/task/5725347"};
+
+		url = new String[]{"https://znaytovar.ru/finance/firm0256018092.html"};
+
+		List<String> results = new LinkedList<>();
+
+		for(int i = 0; i < url.length; i++){
+			results.add(ccc.getContentUrl(url[i]));
+		}
+
+		System.out.println(url.length == results.size());
+
+		PrintWriter writer = new PrintWriter("results.txt", "UTF-8");
+		for (String string : results) {
+			writer.println(string + "\n\n===========================================\n\n");
+		}
+		writer.close();
 
 
 

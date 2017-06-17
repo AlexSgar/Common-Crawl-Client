@@ -14,54 +14,56 @@ import org.json.simple.parser.ParseException;
  * @author Rob
  */
 public class EstrattoreJson {
-     private ObjectURL objectURL;
+	
+	private ObjectURL objectURL;
+	
 	public ObjectURL CreaObjectURL(String json){
 		try {
-			objectURL=new ObjectURL();
-			
-                        //estrazione URI
+			objectURL = new ObjectURL();
+
+			//estrazione URI
 			JSONParser jsonParser = new JSONParser();
 			JSONObject jsonObject = (JSONObject) jsonParser.parse(json);
 			JSONObject jsonObject2 =(JSONObject) jsonObject.get("Envelope");
 			JSONObject jsonObject3 =(JSONObject) jsonObject2.get("WARC-Header-Metadata");
-			
+
 			String warcType = (String) jsonObject3.get("WARC-Type");
-			                        
-                        if (warcType.equals("response")){
-                            //estrazione URI
-                            jsonParser = new JSONParser();
-                            jsonObject = (JSONObject) jsonParser.parse(json);
-                            jsonObject2 =(JSONObject) jsonObject.get("Envelope");
-                            jsonObject3 =(JSONObject) jsonObject2.get("WARC-Header-Metadata");
 
-                            String URI = (String) jsonObject3.get("WARC-Target-URI");
-                            //System.out.println("URI is: " + URI);
-                            objectURL.setURL(URI);
+			if (warcType.equals("response")){
+				//estrazione URI
+				jsonParser = new JSONParser();
+				jsonObject = (JSONObject) jsonParser.parse(json);
+				jsonObject2 =(JSONObject) jsonObject.get("Envelope");
+				jsonObject3 =(JSONObject) jsonObject2.get("WARC-Header-Metadata");
 
-                            //estrazione Actual-Content-Length
-                            jsonObject2 =(JSONObject) jsonObject.get("Envelope");
+				String URI = (String) jsonObject3.get("WARC-Target-URI");
+				//System.out.println("URI is: " + URI);
+				objectURL.setURL(URI);
 
-                            int ActualContentLength = new Integer((String) jsonObject2.get("Actual-Content-Length")).intValue();
-                            //System.out.println("ActualContentLength is: " + ActualContentLength);
-                            objectURL.setActualContentLength(ActualContentLength);
+				//estrazione Actual-Content-Length
+				jsonObject2 =(JSONObject) jsonObject.get("Envelope");
 
-                            //estrazione segmentWARC
-                            jsonObject2 =(JSONObject) jsonObject.get("Container");
+				int ActualContentLength = new Integer((String) jsonObject2.get("Actual-Content-Length")).intValue();
+				//System.out.println("ActualContentLength is: " + ActualContentLength);
+				objectURL.setActualContentLength(ActualContentLength);
 
-                            String Filename = (String) jsonObject2.get("Filename");
-                            //System.out.println("Filename is: " + Filename);
-                            objectURL.setSegmentWARC(Filename);
+				//estrazione segmentWARC
+				jsonObject2 =(JSONObject) jsonObject.get("Container");
 
-                            //estrazione Offset
-                            jsonObject2 =(JSONObject) jsonObject.get("Container");
+				String Filename = (String) jsonObject2.get("Filename");
+				//System.out.println("Filename is: " + Filename);
+				objectURL.setSegmentWARC(Filename);
 
-                            int Offset = new Integer((String) jsonObject2.get("Offset")).intValue();
-                            //System.out.println("Offset is: " + Offset);
-                            objectURL.setOffset(Offset);
-                            return objectURL;
-                        }
-                        else return null;
-                        
+				//estrazione Offset
+				jsonObject2 =(JSONObject) jsonObject.get("Container");
+
+				int Offset = new Integer((String) jsonObject2.get("Offset")).intValue();
+				//System.out.println("Offset is: " + Offset);
+				objectURL.setOffset(Offset);
+				return objectURL;
+			}
+			else return null;
+
 		} catch (ParseException ex) {
 			ex.printStackTrace();
 		} catch (NullPointerException ex) {

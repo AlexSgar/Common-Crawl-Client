@@ -17,12 +17,11 @@ import java.util.List;
 
 public class ParseWat {
 
-	public void parsingWat(String filePath, Connection connectionDB) throws FileNotFoundException, IOException, SQLException{
+	public void parsingWat(String filePath, String lineWat, Connection connectionDB) throws FileNotFoundException, IOException, SQLException{
 		ObjectURL ou = new ObjectURL();
 		EstrattoreJson estrattoreJson=new EstrattoreJson();
-		FileReader reader = new FileReader(filePath);
-		BufferedReader in = new BufferedReader(reader);
-		String line = "";
+		BufferedReader in = new BufferedReader(new FileReader(filePath));
+		String line;
 		System.out.println("Creazione dell'indice in corso...");
 		for (int i = 0; i < 24; i++)
 			line = in.readLine();
@@ -36,6 +35,7 @@ public class ParseWat {
 				JsonUrl = line;
 				if ((line = in.readLine()) != null){
 					ou = estrattoreJson.CreaObjectURL(JsonUrl);
+					ou.setSegmentWARC(lineWat);		//it makes unuseful EstrattoreJson -> get("Filename"), because in this way we obtain the entire warc path
 					objectUrls.add(ou);
 				}
 				k = 0;
@@ -48,7 +48,6 @@ public class ParseWat {
 		if(objectUrls.size() > 0)
 			batchInsertRecordsIntoTable(connectionDB, objectUrls);
 
-		reader.close();
 		in.close();
 		
 		System.out.println("Creazione dell'indice COMPLETATA");

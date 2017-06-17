@@ -36,19 +36,17 @@ public class ControllerIndex {
 	}
 	
 	public void createIndex(String fileWatPath) throws FileNotFoundException, IOException, SQLException{
-		
 		folderWat = oc.getFolderWat();
-		FileReader fr= new FileReader(fileWatPath + "wat.path");
-		BufferedReader in = new BufferedReader(fr);
-		String line;
+		BufferedReader in = new BufferedReader(new FileReader(fileWatPath + "wat.path"));
+		String lineWat;
 		String urlWet=null;
 		String stm =null;
 		
-		connector= new ConnectorDB(oc);
+		connector = new ConnectorDB(oc);
 		Connection connectionDB = connector.getConnection();
 
-		while ((line = in.readLine()) != null){
-			String stringaurl = "https://commoncrawl.s3.amazonaws.com/" + line;
+		while ((lineWat = in.readLine()) != null){
+			String stringaurl = "https://commoncrawl.s3.amazonaws.com/" + lineWat;
 			URL url = new URL(stringaurl);
 			String fileName = url.getFile();
 
@@ -137,7 +135,7 @@ public class ControllerIndex {
 			System.out.println("Decompressione COMPLETATA");
 			
 			ParseWat parseWat = new ParseWat();
-			parseWat.parsingWat(OUTPUT_FILE, connectionDB);
+			parseWat.parsingWat(OUTPUT_FILE, lineWat, connectionDB);
 			
 			System.out.println("Cancello file WAT processato");
 			System.out.println(file.getAbsolutePath());
@@ -161,7 +159,7 @@ public class ControllerIndex {
 				System.out.println("file esiste");
 			}
 		}
-		
+		in.close();
 		connectionDB.close();
 	}
 }
