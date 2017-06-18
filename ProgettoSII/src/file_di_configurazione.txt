@@ -1,0 +1,8 @@
+folderwatpath=/Users/alex/Documents/workspace/sii/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat.path/
+folderFileWarcPath=/Users/alex/Documents/workspace/sii/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file warc.path/
+folderWat=/Users/alex/Documents/workspace/sii/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat/
+folderCache=/Users/alex/Documents/workspace/sii/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/
+maxNumberWARCinCache=5
+maxSizeCache=100000000
+user=alex
+pass=alex
