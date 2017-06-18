@@ -6,6 +6,7 @@
 package progettosii;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 
 import progettosii.Configurations;
@@ -20,8 +21,8 @@ public class CommonCrawlClient {
 	private ObjectConf oc;
 	private TableManager tableManager;
 
-	public CommonCrawlClient(String pathFileConfigurations) throws IOException{
-		this.oc = new Configurations().getConf(pathFileConfigurations);
+	public CommonCrawlClient(String configurationFilePath) throws IOException{
+		this.oc = new Configurations().getConf(configurationFilePath);
 		this.tableManager = new TableManager(this.oc);
 	}
 
@@ -45,11 +46,11 @@ public class CommonCrawlClient {
 		this.tableManager.dropDatabase();
 	}
 
-	public String getContentUrl(String urlRequest) throws SQLException{
+	public String getContentUrl(String urlRequest) throws SQLException, UnsupportedEncodingException{
 		ControllerRequest cr = new ControllerRequest(oc);
 
 		byte[] rawData = cr.getRequest(urlRequest);
-		return new String(rawData);
+		return (rawData!=null) ? new String(rawData,"UTF-8") : null;
 	}
 
 }

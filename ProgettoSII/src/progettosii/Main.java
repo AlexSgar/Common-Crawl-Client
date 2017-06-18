@@ -9,10 +9,10 @@ import java.util.List;
 public class Main {
 
 	public static void main(String[] args) throws IOException, SQLException{
-		String basePath = "/home/nicholas/Documenti";
-		basePath = "/Users/alex/Documents/workspace/sii";
+		String basePathNicholas = "/home/nicholas/Documenti";
+		String basePathAlex = "/Users/alex/Documents/workspace/sii";
 		
-		String configurationPath = basePath + "/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file_di_configurazione.txt";
+		String configurationPath = basePathAlex + "/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file_di_configurazione.txt";
 		
 		
 		CommonCrawlClient ccc = new CommonCrawlClient(configurationPath);
@@ -27,19 +27,23 @@ public class Main {
 				"https://www.pokerstarter.online/blogs/DanPoker77/Chast-shestaya", "https://www.promodeclic.fr/chalonnes-sous-le-lude", 
 				"https://www.promodescuentos.com/discusiones/memoria-ram-en-amazon-32555", "https://znanija.com/task/5725347"};
 
-		//urls on last WAT segment
+		//urls in the last WAT segment
 		url = new String[]{"http://080cc.chat080.com/"};
 
 		List<String> results = new LinkedList<>();
 
 		for(int i = 0; i < url.length; i++){
-			results.add(ccc.getContentUrl(url[i]));
+			String contentUrl = ccc.getContentUrl(url[i]);
+			//System.out.println(contentUrl);
+			if(contentUrl != null){
+				results.add(contentUrl);
+			}
 		}
 
 		System.out.println("Richieste(url): "+url.length +" Risposte(content): "+results.size());
 		System.out.println("Guarda dentro results.txt nella home del progetto per i risultati");
 
-		PrintWriter writer = new PrintWriter("results.txt", "UTF-8");
+		PrintWriter writer = new PrintWriter("results.txt");
 		for (String string : results) {
 			writer.println(string + "\n\n===========================================\n\n");
 		}

@@ -45,7 +45,7 @@ public class ControllerRequest{
 		dbRepository= new DBRepository(oc);
 		Connection connectionDB = dbRepository.getConnection();
 		
-		byte[] rawData = new String("").getBytes();
+		byte[] rawData = null;
 		
 		try {
 			objectURL = generateObjectURL.getObjectURL(pageURL,connectionDB);
@@ -55,52 +55,54 @@ public class ControllerRequest{
 			if(objectURL != null){
 				
 				Cache cache = new Cache(oc);
-				String warcSegmentName = objectURL.getSegmentWARC();
+			
+				/* Disable cache logic,download every time the warc slice containing the url htmlcontent
 				
-				//Disable cache logic,download every time the warc slice containing the url htmlcontent
+				if(!cache.isPresent(objectURL.getSegmentWARC(), connectionDB)){
+					if (cache.getNumberSegmentWarc(connectionDB) <= maxNumberWARCinCache){
+						//if (cache.getSizeCache(connectionDB)<=maxSizeCache){
+						System.out.println("Download segmento warc fino a Offset richiesto in corso");
+						cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+					}
+					else{
+						String OldWARC=cache.getOldWARC(connectionDB);
+						File file = new File(folderCache+OldWARC);
+						file.delete();
+						cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+					}
+				}
+				else{
+					System.out.println("Resume download segmento warc fino a Offset richiesto in corso");
+					cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
+				}*/
 				
-//				if(!cache.isPresent(objectURL.getSegmentWARC(), connectionDB)){
-//					if (cache.getNumberSegmentWarc(connectionDB) <= maxNumberWARCinCache){
-//						//if (cache.getSizeCache(connectionDB)<=maxSizeCache){
-//						System.out.println("Download segmento warc fino a Offset richiesto in corso");
-//						cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-//					}
-//					else{
-//						String OldWARC=cache.getOldWARC(connectionDB);
-//						File file = new File(folderCache+OldWARC);
-//						file.delete();
-//						cache.download(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-//					}
-//				}
-//				else{
-//					System.out.println("Resume download segmento warc fino a Offset richiesto in corso");
-//					cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
-//				}
-				
-				System.out.println("Download segmento WARC richiesto in corso: da offset a offset+1MB");
-				
+				String fullWarcSegment = objectURL.getSegmentWARC();
+				System.out.println("Segmento WARC selezionato: "+fullWarcSegment);
+				System.out.println("Download del segmento WARC richiesto in corso: da offset a offset+1MB");
 				try{
-					cache.download(warcSegmentName, objectURL.getOffset(), connectionDB);
+
+					cache.download(fullWarcSegment, objectURL.getOffset(), connectionDB);
 					
 					WarcReader warcReader = new WarcReader();
-					rawData = warcReader.retriveContentURL(this.folderCache, warcSegmentName,pageURL);
+					rawData = warcReader.retriveContentURL(this.folderCache, fullWarcSegment,pageURL);
 					
-					//delete current warc slice due to cache disabled
+					//delete current warc slice after parsing due to cache disabled
+					String warcSegmentName = fullWarcSegment.split("/warc/")[1];
 					File warcSliceFile = new File(this.folderCache + warcSegmentName);
 					
 					if (warcSliceFile.exists()){
 						if(warcSliceFile.delete())
-							System.out.println("Warc "+warcSegmentName + "scaricato cancellato!");
+							System.out.println("Il segmento WARC scaricato e' stato cancellato dopo il parsing!");
 						else
 							System.out.println("Operazione di delete file "+warcSegmentName +" fallita!");
 					}
 					
 				}
 				catch(IOException e ){
-					//if an error occur with file downloaded or connection
+					//if an error occur with the connection or file downloaded
 					
 					System.out.println("Error: warc associato all'url non trovato!");
-					System.out.println("Searched url: " +searchedUrl + " Searched Warc: " + warcSegmentName);
+					System.out.println("Searched url: " +searchedUrl + " Searched Warc: " + fullWarcSegment);
 					
 					e.printStackTrace();
 					

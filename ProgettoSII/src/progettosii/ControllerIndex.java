@@ -129,16 +129,19 @@ public class ControllerIndex {
 
 				if (watSegmentZippedFile.exists()){
 					if(watSegmentZippedFile.delete())
-						System.out.println(watSegmentZippedFile.getName() + " cancellato!");
-					else
+						System.out.print("Primo file cancellato, ");
+					else{
+						System.out.println("");
 						System.out.println("Operazione di delete file "+watSegmentZippedFile.getName() +" fallita!");
+					}
 				}
 
 				if (watSegmentFile.exists()){
 					if(watSegmentFile.delete()){
-						System.out.println(watSegmentFile.getName() + " cancellato!");
+						System.out.println("secondo file cancellato!");
 					}else{
-						System.out.println("Operazione di delete file "+watSegmentFile.getName() +" fallita!");
+						System.out.println("");
+						System.out.println("Operazione di delete file "+watSegmentZippedFile.getName() +" fallita!");
 					}
 				}
 			}
