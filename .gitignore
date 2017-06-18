@@ -4,12 +4,12 @@ out
 .classpath
 .project
 .settings
+.DS_Store
 *.gz
 *.wat
 *.warc
 the-file-name.txt
-/bin/
+bin/
 /target/
 lib
 file_di_configurazione.txt
-
