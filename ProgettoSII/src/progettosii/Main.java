@@ -28,7 +28,7 @@ public class Main {
 				"https://www.promodescuentos.com/discusiones/memoria-ram-en-amazon-32555", "https://znanija.com/task/5725347"};
 
 		//urls in the last WAT segment
-		url = new String[]{"http://080cc.chat080.com/"};
+		//url = new String[]{"http://080cc.chat080.com/"};
 
 		List<String> results = new LinkedList<>();
 

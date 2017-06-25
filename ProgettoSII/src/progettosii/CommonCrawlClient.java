@@ -6,8 +6,9 @@
 package progettosii;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
+
+import org.json.JSONException;
 
 import progettosii.Configurations;
 
@@ -36,7 +37,7 @@ public class CommonCrawlClient {
 			ci.createIndex();
 		}
 		else{
-			System.out.println("Database esistente,indice non creato. Usare deleteWatIndex per cancellarlo!");
+			System.out.println("Database esistente,indice non creato. Usare deleteWatIndex per cancellarlo!\n");
 		}
 
 	}
@@ -46,7 +47,7 @@ public class CommonCrawlClient {
 		this.tableManager.dropDatabase();
 	}
 
-	public String getContentUrl(String urlRequest) throws SQLException, UnsupportedEncodingException{
+	public String getContentUrl(String urlRequest) throws SQLException, JSONException, IOException{
 		ControllerRequest cr = new ControllerRequest(oc);
 
 		byte[] rawData = cr.getRequest(urlRequest);

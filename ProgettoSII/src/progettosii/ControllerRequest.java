@@ -5,12 +5,16 @@
  */
 package progettosii;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.json.JSONException;
 
 
 public class ControllerRequest{
@@ -33,8 +37,10 @@ public class ControllerRequest{
 	 * @param pageURL
 	 * @return page content from URL
 	 * @throws SQLException
+	 * @throws IOException 
+	 * @throws JSONException 
 	 */
-	public byte[] getRequest(String pageURL) throws SQLException{
+	public byte[] getRequest(String pageURL) throws SQLException, JSONException, IOException{
 		
 		folderCache = oc.getFolderCache();
 //		maxNumberWARCinCache = oc.getMaxNumberWARCinCache();
@@ -50,11 +56,12 @@ public class ControllerRequest{
 		try {
 			objectURL = generateObjectURL.getObjectURL(pageURL,connectionDB);
 			String searchedUrl = pageURL;
+			Cache cache = new Cache(oc);
+			String fullWarcSegment = null;
+			int warcOffset = 0;
 			
 			//check if pageURL is present in the WAT index of the database
 			if(objectURL != null){
-				
-				Cache cache = new Cache(oc);
 			
 				/* Disable cache logic,download every time the warc slice containing the url htmlcontent
 				
@@ -76,43 +83,55 @@ public class ControllerRequest{
 					cache.resume(objectURL.getSegmentWARC(), objectURL.getOffset(), connectionDB);
 				}*/
 				
-				String fullWarcSegment = objectURL.getSegmentWARC();
+				fullWarcSegment = objectURL.getSegmentWARC();
+				warcOffset = objectURL.getOffset();
 				System.out.println("Segmento WARC selezionato: "+fullWarcSegment);
 				System.out.println("Download del segmento WARC richiesto in corso: da offset a offset+1MB");
-				try{
-
-					cache.download(fullWarcSegment, objectURL.getOffset(), connectionDB);
-					
-					WarcReader warcReader = new WarcReader();
-					rawData = warcReader.retriveContentURL(this.folderCache, fullWarcSegment,pageURL);
-					
-					//delete current warc slice after parsing due to cache disabled
-					String warcSegmentName = fullWarcSegment.split("/warc/")[1];
-					File warcSliceFile = new File(this.folderCache + warcSegmentName);
-					
-					if (warcSliceFile.exists()){
-						if(warcSliceFile.delete())
-							System.out.println("Il segmento WARC scaricato e' stato cancellato dopo il parsing!");
-						else
-							System.out.println("Operazione di delete file "+warcSegmentName +" fallita!");
-					}
-					
-				}
-				catch(IOException e ){
-					//if an error occur with the connection or file downloaded
-					
-					System.out.println("Error: warc associato all'url non trovato!");
-					System.out.println("Searched url: " +searchedUrl + " Searched Warc: " + fullWarcSegment);
-					
-					e.printStackTrace();
-					
-				}
+				
 			}
 			else{
+				
 				System.out.println("Error: URL cercato non presente nell'indice WAT del database!");
 				System.out.println("Searched URL: " +searchedUrl);
-			}
+				System.out.println("Cerco URL richiesto nelle URL Index API di CommonCrawl e scarico il segmento WARC associato");
+				
+				BufferedReader br = new BufferedReader(new FileReader(this.oc.getFolderwatpath() + "wat.path"));
+				String crawlArchive = br.readLine().split("/")[1]; //CC-MAIN-2017-04
+				br.close();
+				
+				String warcInfo = CommonCrawlUrlSearch.getWarcInfoFromCommonCrawlURLIndex(pageURL,crawlArchive);
+				String[] warcInfoSplitted = warcInfo.split(",");
+				
+				fullWarcSegment = warcInfoSplitted[0];
+				warcOffset = Integer.parseInt(warcInfoSplitted[1]);
+			}		
 			
+			try{
+				cache.download(fullWarcSegment, warcOffset, connectionDB);
+				
+				WarcReader warcReader = new WarcReader();
+				rawData = warcReader.retriveContentURL(this.folderCache, fullWarcSegment,pageURL);
+				
+				//delete current warc slice after parsing due to cache disabled
+				String warcSegmentName = fullWarcSegment.split("/warc/")[1];
+				File warcSliceFile = new File(this.folderCache + warcSegmentName);
+				
+				if (warcSliceFile.exists()){
+					if(warcSliceFile.delete())
+						System.out.println("Il segmento WARC scaricato e' stato cancellato dopo il parsing!\n");
+					else
+						System.out.println("Operazione di delete file "+warcSegmentName +" fallita!");
+				}
+			}
+			catch(IOException e ){
+				//if an error occur with the connection or file downloaded
+				
+				System.out.println("HTTP Error or with cache folder: warc associato all'url saltato!");
+				System.out.println("Searched url: " +searchedUrl + " Searched Warc: " + fullWarcSegment);
+				
+				e.printStackTrace();
+				
+			}
 
 		} catch (SQLException ex) {
 			Logger.getLogger(ControllerRequest.class.getName()).log(Level.SEVERE, null, ex);

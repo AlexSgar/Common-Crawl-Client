@@ -167,7 +167,7 @@ public class Cache {
 	}
 	
 /*Method resume disabled because of problem with append the new warc slice to the previous:
- * the new warc is readable from filesystem but WarcReader fails*/
+ * the new warc is readable from filesystem but WarcReader fails,you should parse the new file with your own */
 	
 	/*public void resume(String segmentwarc, int newOffset, Connection connectionDB) throws SQLException, IOException{
 		
