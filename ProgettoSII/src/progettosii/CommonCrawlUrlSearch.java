@@ -42,9 +42,9 @@ public class CommonCrawlUrlSearch {
 		//pageUrl = pageUrl.replaceAll("&","%26");
 		//pageUrl = pageUrl.replaceAll("=","%3D");
 
-		pageUrl = URLEncoder.encode(pageUrl,"UTF-8");
+		String pageUrlEcoded = URLEncoder.encode(pageUrl,"UTF-8");
 
-		String url = "http://index.commoncrawl.org/" + crawlArchive + "-index" + "?url=" + pageUrl + "&output=json";
+		String url = "http://index.commoncrawl.org/" + crawlArchive + "-index" + "?url=" + pageUrlEcoded + "&output=json";
 		List<String> warcsInfo = new LinkedList<>();
 		List<JSONObject> jsons = readJsonFromUrl(url);
 		
