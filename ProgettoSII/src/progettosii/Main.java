@@ -9,13 +9,8 @@ import java.util.List;
 public class Main {
 
 	public static void main(String[] args) throws IOException, SQLException{
-		String basePathNicholas = "/home/nicholas/Documenti";
-		String basePathAlex = "/Users/alex/Documents/workspace/sii";
-		
-		String configurationPath = basePathAlex + "/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file_di_configurazione.txt";
-		
-		
-		CommonCrawlClient ccc = new CommonCrawlClient(configurationPath);
+
+		CommonCrawlClient ccc = new CommonCrawlClient();
 		
 //		ccc.deleteWatIndex();
 		ccc.createWatIndex();

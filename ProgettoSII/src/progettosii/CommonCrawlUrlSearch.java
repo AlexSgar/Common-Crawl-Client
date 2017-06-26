@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,7 +38,12 @@ public class CommonCrawlUrlSearch {
 	 * @throws IOException
 	 */
 	public static String getWarcInfoFromCommonCrawlURLIndex(String pageUrl,String crawlArchive) throws JSONException, IOException {
-		
+
+		//pageUrl = pageUrl.replaceAll("&","%26");
+		//pageUrl = pageUrl.replaceAll("=","%3D");
+
+		pageUrl = URLEncoder.encode(pageUrl,"UTF-8");
+
 		String url = "http://index.commoncrawl.org/" + crawlArchive + "-index" + "?url=" + pageUrl + "&output=json";
 		List<String> warcsInfo = new LinkedList<>();
 		List<JSONObject> jsons = readJsonFromUrl(url);

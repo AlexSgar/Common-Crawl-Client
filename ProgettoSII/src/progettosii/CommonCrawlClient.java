@@ -10,8 +10,6 @@ import java.sql.SQLException;
 
 import org.json.JSONException;
 
-import progettosii.Configurations;
-
 
 /**
  *
@@ -19,11 +17,15 @@ import progettosii.Configurations;
  */
 public class CommonCrawlClient {
 
+	String basePathNicholas = "/home/nicholas/Documenti";
+	String basePathAlex = "/Users/alex/Documents/IdeaProjects";//"/Users/alex/Documents/workspace/sii";
+	String configurationPath = basePathAlex + "/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file_di_configurazione.txt";
+
 	private ObjectConf oc;
 	private TableManager tableManager;
 
-	public CommonCrawlClient(String configurationFilePath) throws IOException{
-		this.oc = new Configurations().getConf(configurationFilePath);
+	public CommonCrawlClient() throws IOException{
+		this.oc = new Configurations().getConf(configurationPath);
 		this.tableManager = new TableManager(this.oc);
 	}
 

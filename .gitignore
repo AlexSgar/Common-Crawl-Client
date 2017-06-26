@@ -1,6 +1,7 @@
 # SII-dei-Tizi
 out
 .idea
+*.iml
 .classpath
 .project
 .settings
@@ -10,7 +11,7 @@ out
 *.warc
 the-file-name.txt
 bin/
-/target/
+ProgettoSII/target/
 lib
 /cache/
 /file wat/
