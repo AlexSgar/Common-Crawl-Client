@@ -1,3 +1,3 @@
 # Common Crawl Client
 
-A client that interface with Common Crawl http://commoncrawl.org/
+A client that interfaces with Common Crawl http://commoncrawl.org/
