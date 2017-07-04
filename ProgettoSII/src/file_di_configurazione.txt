@@ -4,5 +4,5 @@ folderWat=/Users/alex/Documents/IdeaProjects/CommonCrawl-ProgettoSII-final-with-
 folderCache=/Users/alex/Documents/IdeaProjects/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/
 maxNumberWARCinCache=5
 maxSizeCache=100000000
-user=alex
-pass=alex
+user=
+pass=
