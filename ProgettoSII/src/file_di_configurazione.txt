@@ -1,7 +1,7 @@
-folderwatpath=/Users/alex/Documents/IdeaProjects/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat.path/
-folderFileWarcPath=/Users/alex/Documents/IdeaProjects/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file warc.path/
-folderWat=/Users/alex/Documents/IdeaProjects/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/file wat/
-folderCache=/Users/alex/Documents/IdeaProjects/CommonCrawl-ProgettoSII-final-with-fileconf2/ProgettoSII/src/cache/
+folderwatpath=pathToFolder/ProgettoSII/src/file wat.path/
+folderFileWarcPath=pathToFolder/ProgettoSII/src/file warc.path/
+folderWat=pathToFolder/ProgettoSII/src/file wat/
+folderCache=pathToFolder/ProgettoSII/src/cache/
 maxNumberWARCinCache=5
 maxSizeCache=100000000
 user=
